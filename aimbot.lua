@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Working Hitbox Godmode)
+-- DELTA PRISON (True Hitbox Godmode + FPS Boost)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -33,7 +33,7 @@ _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 _G.Godmode = false
-_G.GodOffset = 15 -- How far underground your hitbox goes
+_G.GodOffset = 20 -- Moves torso down 20 studs
 
 local FullbrightOn = false
 local originalLighting = {
@@ -362,7 +362,7 @@ optBtn.MouseButton1Click:Connect(function()
     
     for _, obj in ipairs(Lighting:GetDescendants()) do 
         if obj:IsA("Atmosphere") or obj:IsA("Sky") then obj:Destroy() 
-        elseif obj:IsA("PostEffect") then obj.Enabled = false end
+        elseif obj:IsA("PostEffect") then obj:Enabled = false end
     end
 
     for _, obj in ipairs(Workspace:GetDescendants()) do
@@ -413,7 +413,7 @@ fbBtn.MouseButton1Click:Connect(function()
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, ESP, GODMODE)
+-- LOGIC (AIMBOT, MOVEMENT, ESP)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -511,7 +511,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Main Heartbeat Loop
+-- Main Heartbeat Loop (TRUE GODMODE)
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -530,30 +530,28 @@ RunService.Heartbeat:Connect(function()
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
 
-            -- HITBOX GODMODE
+            -- TRUE HITBOX GODMODE
             if _G.Godmode then
                 humanoid.Health = math.huge
                 humanoid.MaxHealth = math.huge
                 
-                -- Hide the Torso and Head from server hitboxes
-                local torso = LocalPlayer.Character:FindFirstChild("Torso") or LocalPlayer.Character:FindFirstChild("UpperTorso")
+                -- Disable the game's Health script so it can't hurt us
+                local healthScript = LocalPlayer.Character:FindFirstChild("Health")
+                if healthScript and healthScript:IsA("LocalScript") then
+                    healthScript.Disabled = true
+                end
+
+                -- Move the Torso and Head underground, NOT the HRP
+                local torso = LocalPlayer.Character:FindFirstChild("Torso")
                 local head = LocalPlayer.Character:FindFirstChild("Head")
                 
                 if torso then 
                     torso.CanCollide = false
-                    -- Teleport the torso deep underground (but not too deep to break camera)
-                    torso.CFrame = CFrame.new(torso.Position.X, torso.Position.Y - _G.GodOffset, torso.Position.Z)
+                    torso.CFrame = CFrame.new(torso.Position.X, hrp.Position.Y - _G.GodOffset, torso.Position.Z)
                 end
                 if head then 
                     head.CanCollide = false 
-                    head.CFrame = CFrame.new(head.Position.X, head.Position.Y - _G.GodOffset, head.Position.Z)
-                end
-
-                -- If the server realizes you should be dead, it kicks you, but this bypasses the hit registration
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    head.CFrame = CFrame.new(head.Position.X, hrp.Position.Y - _G.GodOffset, head.Position.Z)
                 end
             end
         end
