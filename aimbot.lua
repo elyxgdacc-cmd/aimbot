@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Deco Remover FPS Boost)
+-- DELTA PRISON (True Godmode + One-Click Optimize)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -32,14 +33,12 @@ _G.ESP = false
 _G.Godmode = false
 _G.AutoArrest = false
 _G.AutoPunch = false
-_G.FpsBoost = false
-_G.Fullbright = false
 
-local LightBackup = {
+local FullbrightOn = false
+local originalLighting = {
     Ambient = Lighting.Ambient,
     OutdoorAmbient = Lighting.OutdoorAmbient,
-    Brightness = Lighting.Brightness,
-    GlobalShadows = Lighting.GlobalShadows
+    Brightness = Lighting.Brightness
 }
 
 -- =============================================================================
@@ -248,14 +247,41 @@ for _, part in ipairs({"Head", "Torso", "HRP"}) do
 end
 
 AddSection("Combat Mods")
-AddToggle("Godmode", "Godmode")
+AddToggle("True Godmode", "Godmode")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
 AddSection("Visuals & Performance")
 AddToggle("Team ESP", "ESP")
-AddToggle("Fullbright", "Fullbright")
-AddToggle("FPS Boost (Remove Deco)", "FpsBoost")
+
+-- The Two Buttons
+local btnRow = Instance.new("Frame")
+btnRow.Size = UDim2.new(1, 0, 0, 28)
+btnRow.BackgroundTransparency = 1
+btnRow.Parent = Container
+local btnLayout = Instance.new("UIListLayout", btnRow)
+btnLayout.FillDirection = Enum.FillDirection.Horizontal
+btnLayout.Padding = UDim.new(0, 4)
+
+local optBtn = Instance.new("TextButton")
+optBtn.Size = UDim2.new(0.5, -2, 1, 0)
+optBtn.BackgroundColor3 = Color3.fromRGB(30, 80, 30)
+optBtn.Text = "⚡ Optimize"
+optBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+optBtn.Font = Enum.Font.GothamBold
+optBtn.TextSize = 10
+optBtn.Parent = btnRow
+Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 4)
+
+local fbBtn = Instance.new("TextButton")
+fbBtn.Size = UDim2.new(0.5, -2, 1, 0)
+fbBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 30)
+fbBtn.Text = "☀️ Fullbright"
+fbBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+fbBtn.Font = Enum.Font.GothamBold
+fbBtn.TextSize = 10
+fbBtn.Parent = btnRow
+Instance.new("UICorner", fbBtn).CornerRadius = UDim.new(0, 4)
 
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
@@ -320,6 +346,68 @@ MinBtn.MouseButton1Click:Connect(function()
         MainFrame.Size = UDim2.new(0, 260, 0, 260)
         MinBtn.Text = "-"
         Container.Visible = true
+    end
+end)
+
+-- =============================================================================
+-- BUTTON LOGIC (OPTIMIZE & FULLBRIGHT)
+-- =============================================================================
+
+optBtn.MouseButton1Click:Connect(function()
+    optBtn.Text = "Optimizing..."
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+    Lighting.FogEnd = 999999 
+    Lighting.GlobalShadows = false 
+    
+    for _, obj in ipairs(Lighting:GetDescendants()) do 
+        if obj:IsA("Atmosphere") or obj:IsA("Sky") then obj:Destroy() 
+        elseif obj:IsA("PostEffect") then obj.Enabled = false end
+    end
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Transparency < 1 then
+            obj.Material = Enum.Material.SmoothPlastic
+            obj.CastShadow = false
+        elseif obj:IsA("ParticleEmitter") or obj:IsA("Smoke") or obj:IsA("Fire") then
+            obj.Enabled = false
+        end
+    end
+    task.wait(1)
+    optBtn.Text = "⚡ Optimized!"
+    optBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+end)
+
+fbBtn.MouseButton1Click:Connect(function()
+    FullbrightOn = not FullbrightOn
+    if FullbrightOn then
+        local ambientBrightness = (originalLighting.Ambient.R + originalLighting.Ambient.G + originalLighting.Ambient.B) / 3
+        local outdoorBrightness = (originalLighting.OutdoorAmbient.R + originalLighting.OutdoorAmbient.G + originalLighting.OutdoorAmbient.B) / 3
+        local generalDarkness = (ambientBrightness + outdoorBrightness) / 2
+        
+        if generalDarkness < 0.1 then
+            Lighting.Ambient = Color3.fromRGB(180, 180, 180)
+            Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+            Lighting.Brightness = 3.5
+        elseif generalDarkness < 0.4 then
+            Lighting.Ambient = Color3.fromRGB(140, 140, 140)
+            Lighting.OutdoorAmbient = Color3.fromRGB(140, 140, 140)
+            Lighting.Brightness = 2.5
+        else
+            Lighting.Ambient = Color3.fromRGB(110, 110, 110)
+            Lighting.OutdoorAmbient = Color3.fromRGB(110, 110, 110)
+            Lighting.Brightness = 1.2
+        end
+        
+        fbBtn.Text = "☀️ ON"
+        fbBtn.TextColor3 = Color3.fromRGB(100, 255, 100)
+        fbBtn.BackgroundColor3 = Color3.fromRGB(30, 80, 30)
+    else
+        Lighting.Ambient = originalLighting.Ambient
+        Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
+        Lighting.Brightness = originalLighting.Brightness
+        fbBtn.Text = "☀️ Fullbright"
+        fbBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+        fbBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 30)
     end
 end)
 
@@ -424,38 +512,6 @@ end)
 
 -- Main Heartbeat Loop
 RunService.Heartbeat:Connect(function()
-    -- FPS BOOST (REMOVE DECO)
-    if _G.FpsBoost then
-        Lighting.GlobalShadows = false
-        for _, obj in pairs(workspace:GetDescendants()) do
-            -- Disable particles and lighting effects
-            if obj:IsA("ParticleEmitter") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-                obj.Enabled = false
-            -- Remove grass, bushes, trees, and generic decorations
-            elseif obj:IsA("BasePart") and (obj.Name == "Grass" or obj.Name == "Bush" or obj.Name == "Tree" or obj.Material == Enum.Material.Grass) then
-                obj.Transparency = 1
-                obj.CanCollide = false
-            -- Flatten textures to smooth plastic for less rendering lag
-            elseif obj:IsA("BasePart") and obj.Material ~= Enum.Material.SmoothPlastic then
-                obj.Material = Enum.Material.SmoothPlastic
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = 1
-            end
-        end
-    end
-
-    if _G.Fullbright then
-        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-        Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-        Lighting.Brightness = 2
-        Lighting.GlobalShadows = false
-    else
-        Lighting.Ambient = LightBackup.Ambient
-        Lighting.OutdoorAmbient = LightBackup.OutdoorAmbient
-        Lighting.Brightness = LightBackup.Brightness
-        Lighting.GlobalShadows = LightBackup.GlobalShadows
-    end
-
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -473,17 +529,21 @@ RunService.Heartbeat:Connect(function()
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
 
-            -- GODMODE LOGIC
+            -- TRUE GODMODE LOGIC (Hitbox Bypass)
             if _G.Godmode then
                 humanoid.Health = math.huge
                 humanoid.MaxHealth = math.huge
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                
+                -- If the server tries to kill us, we reset the torso and disable collisions
+                local torso = LocalPlayer.Character:FindFirstChild("Torso") or LocalPlayer.Character:FindFirstChild("UpperTorso")
+                if torso then
+                    torso.CanCollide = false
+                    torso.Transparency = 0.5
                 end
-                if hrp.Velocity.Y < -50 then
-                    hrp.Velocity = Vector3.new(hrp.Velocity.X, -50, hrp.Velocity.Z)
+                
+                -- Prevent falling into the void due to no collision
+                if hrp.AssemblyLinearVelocity.Y < -50 then
+                    hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -50, hrp.AssemblyLinearVelocity.Z)
                 end
             end
         end
