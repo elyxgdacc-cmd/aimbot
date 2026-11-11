@@ -33,7 +33,7 @@ _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 _G.Godmode = false
-_G.GodOffset = 15 -- How far underground your hitbox goes
+_G.GodOffset = 15
 
 local FullbrightOn = false
 local originalLighting = {
@@ -530,7 +530,7 @@ RunService.Heartbeat:Connect(function()
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
 
-            -- TRUE HITBOX GODMODE
+            -- HITBOX GODMODE
             if _G.Godmode then
                 humanoid.Health = math.huge
                 humanoid.MaxHealth = math.huge
