@@ -28,6 +28,7 @@ _G.ShowCrosshair = true
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
+_G.Sprint = false -- Added sprint toggle
 
 -- Auto Escape Globals
 _G.AutoEscape = false
@@ -44,8 +45,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 280, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -244,6 +245,7 @@ end
 
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
+AddToggle("Sprint (Hold LShift)", "Sprint")
 AddTextbox("Speed", "SpeedValue")
 AddTextbox("Jump Power", "JumpValue")
 
@@ -286,7 +288,7 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 380)
+        MainFrame.Size = UDim2.new(0, 280, 0, 400)
         MinBtn.Text = "-"
         Container.Visible = true
     end
@@ -365,8 +367,22 @@ RunService.Heartbeat:Connect(function()
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         
-        if humanoid then
-            humanoid.WalkSpeed = _G.SpeedValue
+        if humanoid and hrp then
+            
+            -- EXACT IDK.LUA SPEED LOGIC
+            local spd = _G.SpeedValue
+            if _G.Sprint and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
+                spd = spd * 2 
+            end
+
+            if humanoid.MoveDirection.Magnitude > 0 and spd > 16 then
+                local velocityVector = humanoid.MoveDirection * spd
+                hrp.AssemblyLinearVelocity = Vector3.new(velocityVector.X, hrp.AssemblyLinearVelocity.Y, velocityVector.Z)
+            else
+                humanoid.WalkSpeed = spd
+            end
+            -- END SPEED LOGIC
+
             if humanoid.UseJumpPower then
                 humanoid.JumpPower = _G.JumpValue
             else
@@ -377,7 +393,6 @@ RunService.Heartbeat:Connect(function()
         -- PRISON LIFE CUSTOM TELEPORT ESCAPE
         if _G.AutoEscape and hrp then
             local lookDir = Camera.CFrame.LookVector
-            -- Teleport you forward based on camera direction by your custom studs
             hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
         end
     end
