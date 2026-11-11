@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot — FOV, Crosshair, Smoothing & Minimize
+-- DELTA Aimbot + Movement — FOV, Crosshair, Smoothing & Minimize
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -13,14 +13,21 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local _G = getgenv and getgenv() or _G
+
+-- Aimbot Globals
 _G.Aimbot = false
 _G.TeamCheck = false
 _G.WallCheck = false
 _G.AimFov = 150
-_G.AimSmooth = 0.25
+_G.AimSmooth = 25
 _G.AimPart = "Head"
 _G.ShowFov = true
 _G.ShowCrosshair = true
+
+-- Movement Globals
+_G.SpeedValue = 16
+_G.JumpValue = 50
+_G.InfJump = false
 
 -- =============================================================================
 -- UI CREATION
@@ -34,8 +41,8 @@ ScreenGui.IgnoreGuiInset = true
 
 -- Main Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 320, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -55,7 +62,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "DELTA AIMBOT"
+Title.Text = "DELTA MENU"
 Title.TextColor3 = Color3.fromRGB(0, 245, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -79,7 +86,8 @@ local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 0
+Container.ScrollBarThickness = 2
+Container.ScrollBarImageColor3 = Color3.fromRGB(0, 245, 255)
 Container.CanvasSize = UDim2.new(0, 0, 0, 0)
 Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Container.Parent = MainFrame
@@ -89,6 +97,18 @@ layout.Padding = UDim.new(0, 6)
 -- =============================================================================
 -- UI COMPONENTS
 -- =============================================================================
+
+local function AddSection(titleText)
+    local sec = Instance.new("TextLabel")
+    sec.Size = UDim2.new(1, 0, 0, 20)
+    sec.BackgroundTransparency = 1
+    sec.Text = string.upper(titleText)
+    sec.TextColor3 = Color3.fromRGB(0, 245, 255)
+    sec.TextXAlignment = Enum.TextXAlignment.Left
+    sec.Font = Enum.Font.GothamBold
+    sec.TextSize = 11
+    sec.Parent = Container
+end
 
 local function AddToggle(text, varName)
     local item = Instance.new("Frame")
@@ -126,7 +146,7 @@ local function AddToggle(text, varName)
     end)
 end
 
-local function AddSlider(text, min, max, default, varName)
+local function AddSlider(text, min, max, varName)
     local item = Instance.new("Frame")
     item.Size = UDim2.new(1, 0, 0, 45)
     item.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
@@ -177,14 +197,18 @@ local function AddSlider(text, min, max, default, varName)
     end)
 end
 
--- Populate UI
+-- =============================================================================
+-- POPULATE UI
+-- =============================================================================
+
+AddSection("Aimbot")
 AddToggle("Enable Aimbot", "Aimbot")
 AddToggle("Show FOV Circle", "ShowFov")
 AddToggle("Show Crosshair", "ShowCrosshair")
 AddToggle("Team Check", "TeamCheck")
 AddToggle("Wall Check", "WallCheck")
-AddSlider("FOV Radius", 50, 500, 150, "AimFov")
-AddSlider("Smoothing (0=Slow, 100=Snap)", 0, 100, 25, "AimSmooth")
+AddSlider("FOV Radius", 50, 500, "AimFov")
+AddSlider("Smoothing", 0, 100, "AimSmooth")
 
 -- Part Selector
 local partRow = Instance.new("Frame")
@@ -228,6 +252,12 @@ for _, part in ipairs({"Head", "Torso", "HumanoidRootPart"}) do
     end)
 end
 
+-- Movement Section
+AddSection("Movement")
+AddToggle("Infinite Jump", "InfJump")
+AddSlider("Speed", 16, 150, "SpeedValue")
+AddSlider("Jump Power", 50, 250, "JumpValue")
+
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
 -- =============================================================================
@@ -240,7 +270,7 @@ Crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Crosshair.Parent = ScreenGui
 Instance.new("UICorner", Crosshair).CornerRadius = UDim.new(1, 0)
 
--- FOV Circle (Dynamically updates size based on slider)
+-- FOV Circle
 local FovCircle = Instance.new("Frame")
 FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
 FovCircle.Position = UDim2.new(0.5, -_G.AimFov, 0.5, -_G.AimFov)
@@ -265,14 +295,14 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 320, 0, 380)
+        MainFrame.Size = UDim2.new(0, 320, 0, 480)
         MinBtn.Text = "-"
         Container.Visible = true
     end
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, VISUALS)
+-- LOGIC (AIMBOT, MOVEMENT, VISUALS)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -301,7 +331,6 @@ local function getClosestPlayer()
                 local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
                 if onScreen then
                     local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    -- Check against the FOV slider
                     if dist <= _G.AimFov and dist < bestDist then 
                         target = p
                         bestDist = dist 
@@ -318,7 +347,6 @@ RunService.RenderStepped:Connect(function()
     -- 1. Handle FOV & Crosshair Visibility
     if FovCircle then
         FovCircle.Visible = _G.ShowFov
-        -- Update FOV size dynamically
         FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
         FovCircle.Position = UDim2.new(0.5, -_G.AimFov, 0.5, -_G.AimFov)
     end
@@ -334,12 +362,37 @@ RunService.RenderStepped:Connect(function()
             local currentCFrame = Camera.CFrame
             local goalCFrame = CFrame.new(currentCFrame.Position, targetPos)
             
-            -- Math to turn slider 0-100 into Lerp 0.01-1.0
             local smoothFactor = _G.AimSmooth / 100
-            
             if smoothFactor > 0 then
                 Camera.CFrame = currentCFrame:Lerp(goalCFrame, smoothFactor)
             end
+        end
+    end
+end)
+
+-- Movement Loop
+RunService.Heartbeat:Connect(function()
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Apply Speed and Jump
+            humanoid.WalkSpeed = _G.SpeedValue
+            
+            if humanoid.UseJumpPower then
+                humanoid.JumpPower = _G.JumpValue
+            else
+                humanoid.JumpHeight = _G.JumpValue / 7 -- Rough conversion for R15 rigs
+            end
+        end
+    end
+end)
+
+-- Infinite Jump Logic
+UserInputService.JumpRequest:Connect(function()
+    if _G.InfJump and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 end)
