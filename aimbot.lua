@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Optimized + No Broken Godmode)
+-- DELTA PRISON (Underground Godmode)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -32,6 +32,7 @@ _G.Sprint = false
 _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
+_G.UndergroundGod = false
 
 local FullbrightOn = false
 local originalLighting = {
@@ -246,6 +247,7 @@ for _, part in ipairs({"Head", "Torso", "HRP"}) do
 end
 
 AddSection("Combat Mods")
+AddToggle("Underground Godmode", "UndergroundGod")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
@@ -525,6 +527,20 @@ RunService.Heartbeat:Connect(function()
             end
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
+
+            -- UNDERGROUND GODMODE
+            if _G.UndergroundGod then
+                humanoid.Health = math.huge
+                humanoid.MaxHealth = math.huge
+                -- Teleport Hitbox 50 studs under the ground
+                hrp.CFrame = CFrame.new(hrp.Position.X, -50, hrp.Position.Z)
+                -- Remove collisions so you don't get stuck
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
         end
     end
 end)
