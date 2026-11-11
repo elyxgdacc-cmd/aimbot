@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Mobile Landscape Fixed)
+-- DELTA PRISON (Godmode + Auto-Arrest/Punch)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -27,9 +27,10 @@ _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
 _G.Sprint = false
-_G.AutoEscape = false
-_G.EscapeStuds = 15
 _G.ESP = false
+_G.Godmode = false
+_G.AutoArrest = false
+_G.AutoPunch = false
 
 -- =============================================================================
 -- UI CREATION
@@ -42,7 +43,6 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
--- Made it small enough for mobile landscape
 MainFrame.Size = UDim2.new(0, 260, 0, 260) 
 MainFrame.Position = UDim2.new(0.5, -130, 0.5, -130)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
@@ -81,7 +81,6 @@ MinBtn.TextSize = 14
 MinBtn.Parent = Header
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
 
--- WORKING SCROLLING FRAME
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -10, 1, -35)
 Container.Position = UDim2.new(0, 5, 0, 35)
@@ -238,6 +237,11 @@ for _, part in ipairs({"Head", "Torso", "HRP"}) do
     end)
 end
 
+AddSection("Combat Mods")
+AddToggle("Godmode", "Godmode")
+AddToggle("Auto-Arrest", "AutoArrest")
+AddToggle("Auto-Punch", "AutoPunch")
+
 AddSection("Visuals")
 AddToggle("Team ESP", "ESP")
 
@@ -247,9 +251,24 @@ AddToggle("Sprint (LShift)", "Sprint")
 AddTextbox("Speed", "SpeedValue")
 AddTextbox("Jump Power", "JumpValue")
 
-AddSection("Prison Life")
-AddToggle("Auto Escape", "AutoEscape")
-AddTextbox("Escape Studs", "EscapeStuds")
+AddSection("Teleport")
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(1, 0, 0, 30)
+tpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+tpBtn.Text = "⚡ Teleport Forward"
+tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.TextSize = 11
+tpBtn.Parent = Container
+Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 6)
+
+tpBtn.MouseButton1Click:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        local lookDir = Camera.CFrame.LookVector
+        hrp.CFrame = hrp.CFrame + (lookDir * 15)
+    end
+end)
 
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
@@ -293,7 +312,7 @@ MinBtn.MouseButton1Click:Connect(function()
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE, ESP)
+-- LOGIC (AIMBOT, MOVEMENT, ESP)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -354,16 +373,19 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
+    -- ESP Logic
     if _G.ESP then
         for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            if p ~= LocalPlayer and p.Character then
                 local hum = p.Character:FindFirstChildOfClass("Humanoid")
-                if hum and hum.Health > 0 then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                
+                if hum and hrp and hum.Health > 0 then
                     local box = espCache[p]
                     if not box then
                         box = Instance.new("BoxHandleAdornment")
                         box.Name = "DeltaESP"
-                        box.Adornee = p.Character.HumanoidRootPart
+                        box.Adornee = hrp
                         box.Size = Vector3.new(4, 6, 4)
                         box.AlwaysOnTop = true
                         box.ZIndex = 10
@@ -372,6 +394,11 @@ RunService.RenderStepped:Connect(function()
                         espCache[p] = box
                     end
                     if p.Team then box.Color3 = p.Team.TeamColor.Color else box.Color3 = Color3.fromRGB(0, 245, 255) end
+                else
+                    if espCache[p] then
+                        espCache[p]:Destroy()
+                        espCache[p] = nil
+                    end
                 end
             end
         end
@@ -400,11 +427,55 @@ RunService.Heartbeat:Connect(function()
             end
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
-        end
 
-        if _G.AutoEscape and hrp then
-            local lookDir = Camera.CFrame.LookVector
-            hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
+            -- GODMODE LOGIC
+            if _G.Godmode then
+                humanoid.Health = math.huge
+                -- Also make sure the head and torso don't take damage from the client side
+                humanoid.MaxHealth = math.huge
+            end
+        end
+    end
+end)
+
+-- COMBAT MODS LOGIC (Auto-Arrest & Auto-Punch)
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if LocalPlayer.Character then
+            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                -- Auto-Arrest
+                if _G.AutoArrest then
+                    local tool = LocalPlayer.Character:FindFirstChild("Arrest")
+                    if tool then
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                                local dist = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                                if dist < 8 and p.Team ~= LocalPlayer.Team then
+                                    tool:Activate()
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                -- Auto-Punch
+                if _G.AutoPunch then
+                    -- Find any fist tool
+                    local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                    if tool and (tool.Name == "Fist" or tool.Name == "Punch") then
+                        for _, p in pairs(Players:GetPlayers()) do
+                            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                                local dist = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                                if dist < 8 and p.Team ~= LocalPlayer.Team then
+                                    tool:Activate()
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
 end)
