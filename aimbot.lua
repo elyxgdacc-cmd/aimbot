@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement (Compact UI)
+-- DELTA Aimbot + Movement + Auto Escape (Prison Life)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -29,6 +29,9 @@ _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
 
+-- Auto Escape Globals
+_G.AutoEscape = false
+
 -- =============================================================================
 -- UI CREATION
 -- =============================================================================
@@ -39,10 +42,9 @@ ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- Main Frame (Made smaller: 280x320)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 280, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -180)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -51,7 +53,6 @@ local stroke = Instance.new("UIStroke", MainFrame)
 stroke.Color = Color3.fromRGB(0, 245, 255)
 stroke.Thickness = 1.5
 
--- Header
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 35)
 Header.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -62,14 +63,13 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "DELTA MENU"
+Title.Text = "DELTA PRISON"
 Title.TextColor3 = Color3.fromRGB(0, 245, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
--- Minimize Button
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 25, 0, 25)
 MinBtn.Position = UDim2.new(1, -30, 0, 5)
@@ -81,7 +81,6 @@ MinBtn.TextSize = 16
 MinBtn.Parent = Header
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
 
--- Container for scrolling
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
@@ -177,6 +176,9 @@ local function AddSlider(text, min, max, varName)
     fill.Parent = bar
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
+    -- FIXED SLIDER LOGIC
+    local isDragging = false
+
     local function updateSlider(x)
         local percent = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
         local val = math.floor(min + (max - min) * percent)
@@ -187,12 +189,20 @@ local function AddSlider(text, min, max, varName)
 
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
             updateSlider(input.Position.X)
         end
     end)
+
     UserInputService.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             updateSlider(input.Position.X)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = false
         end
     end)
 end
@@ -210,7 +220,6 @@ AddToggle("Wall Check", "WallCheck")
 AddSlider("FOV Radius", 50, 500, "AimFov")
 AddSlider("Smoothing", 0, 100, "AimSmooth")
 
--- Part Selector
 local partRow = Instance.new("Frame")
 partRow.Size = UDim2.new(1, 0, 0, 35)
 partRow.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
@@ -252,17 +261,18 @@ for _, part in ipairs({"Head", "Torso", "HumanoidRootPart"}) do
     end)
 end
 
--- Movement Section
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
 AddSlider("Speed", 16, 150, "SpeedValue")
 AddSlider("Jump Power", 50, 250, "JumpValue")
 
+AddSection("Prison Life")
+AddToggle("Auto Escape", "AutoEscape")
+
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
 -- =============================================================================
 
--- Crosshair
 local Crosshair = Instance.new("Frame")
 Crosshair.Size = UDim2.new(0, 4, 0, 4)
 Crosshair.Position = UDim2.new(0.5, -2, 0.5, -2)
@@ -270,15 +280,13 @@ Crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Crosshair.Parent = ScreenGui
 Instance.new("UICorner", Crosshair).CornerRadius = UDim.new(1, 0)
 
--- FOV Circle
 local FovCircle = Instance.new("Frame")
 FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
 FovCircle.Position = UDim2.new(0.5, -_G.AimFov, 0.5, -_G.AimFov)
 FovCircle.BackgroundTransparency = 1
-FovCircle.Active = false -- This is the magic line that lets you click through it!
+FovCircle.Active = false 
 FovCircle.Parent = ScreenGui
-local fovCorner = Instance.new("UICorner", FovCircle)
-fovCorner.CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", FovCircle).CornerRadius = UDim.new(1, 0)
 local fovStroke = Instance.new("UIStroke", FovCircle)
 fovStroke.Color = Color3.fromRGB(0, 245, 255)
 fovStroke.Thickness = 1.5
@@ -296,14 +304,14 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 320)
+        MainFrame.Size = UDim2.new(0, 280, 0, 360)
         MinBtn.Text = "-"
         Container.Visible = true
     end
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, VISUALS)
+-- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -345,7 +353,6 @@ end
 
 -- Render Loop
 RunService.RenderStepped:Connect(function()
-    -- 1. Handle FOV & Crosshair Visibility
     if FovCircle then
         FovCircle.Visible = _G.ShowFov
         FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
@@ -355,7 +362,6 @@ RunService.RenderStepped:Connect(function()
         Crosshair.Visible = _G.ShowCrosshair
     end
 
-    -- 2. Handle Aimbot Camera
     if _G.Aimbot then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(_G.AimPart) then
@@ -371,10 +377,12 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Movement Loop
+-- Physics & Auto Escape Loop
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
         if humanoid then
             humanoid.WalkSpeed = _G.SpeedValue
             if humanoid.UseJumpPower then
@@ -382,6 +390,13 @@ RunService.Heartbeat:Connect(function()
             else
                 humanoid.JumpHeight = _G.JumpValue / 7
             end
+        end
+
+        -- PRISON LIFE AUTO ESCAPE
+        if _G.AutoEscape and hrp then
+            -- The classic Prison Life escape vector (pushes you through the wall/out of bounds)
+            -- Adjust the Vector3 if you need to point it a different way
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, 0, -5) 
         end
     end
 end)
