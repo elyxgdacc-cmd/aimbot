@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Working Hitbox Godmode + Optimize)
+-- DELTA PRISON (Working Hitbox Godmode)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -33,7 +33,7 @@ _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 _G.Godmode = false
-_G.GodOffset = 20
+_G.GodOffset = 15 -- How far underground your hitbox goes
 
 local FullbrightOn = false
 local originalLighting = {
@@ -413,7 +413,7 @@ fbBtn.MouseButton1Click:Connect(function()
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, ESP)
+-- LOGIC (AIMBOT, MOVEMENT, ESP, GODMODE)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -511,7 +511,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Main Heartbeat Loop (TRUE GODMODE)
+-- Main Heartbeat Loop
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
