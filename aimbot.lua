@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement — FOV, Crosshair, Smoothing & Minimize
+-- DELTA Aimbot + Movement (Compact UI)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -39,10 +39,10 @@ ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- Main Frame
+-- Main Frame (Made smaller: 280x320)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
+MainFrame.Size = UDim2.new(0, 280, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -73,7 +73,7 @@ Title.Parent = Header
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 25, 0, 25)
 MinBtn.Position = UDim2.new(1, -30, 0, 5)
-MinBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 MinBtn.Text = "-"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBold
@@ -86,7 +86,7 @@ local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -45)
 Container.Position = UDim2.new(0, 10, 0, 40)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 2
+Container.ScrollBarThickness = 3
 Container.ScrollBarImageColor3 = Color3.fromRGB(0, 245, 255)
 Container.CanvasSize = UDim2.new(0, 0, 0, 0)
 Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -275,6 +275,7 @@ local FovCircle = Instance.new("Frame")
 FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
 FovCircle.Position = UDim2.new(0.5, -_G.AimFov, 0.5, -_G.AimFov)
 FovCircle.BackgroundTransparency = 1
+FovCircle.Active = false -- This is the magic line that lets you click through it!
 FovCircle.Parent = ScreenGui
 local fovCorner = Instance.new("UICorner", FovCircle)
 fovCorner.CornerRadius = UDim.new(1, 0)
@@ -291,11 +292,11 @@ local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
-        MainFrame.Size = UDim2.new(0, 320, 0, 35)
+        MainFrame.Size = UDim2.new(0, 280, 0, 35)
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 320, 0, 480)
+        MainFrame.Size = UDim2.new(0, 280, 0, 320)
         MinBtn.Text = "-"
         Container.Visible = true
     end
@@ -375,13 +376,11 @@ RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
-            -- Apply Speed and Jump
             humanoid.WalkSpeed = _G.SpeedValue
-            
             if humanoid.UseJumpPower then
                 humanoid.JumpPower = _G.JumpValue
             else
-                humanoid.JumpHeight = _G.JumpValue / 7 -- Rough conversion for R15 rigs
+                humanoid.JumpHeight = _G.JumpValue / 7
             end
         end
     end
