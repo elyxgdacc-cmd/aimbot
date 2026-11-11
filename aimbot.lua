@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Godmode, Combat, FPS Boost, Fullbright)
+-- DELTA PRISON (Deco Remover FPS Boost)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -35,7 +35,6 @@ _G.AutoPunch = false
 _G.FpsBoost = false
 _G.Fullbright = false
 
--- Backup Lighting
 local LightBackup = {
     Ambient = Lighting.Ambient,
     OutdoorAmbient = Lighting.OutdoorAmbient,
@@ -256,7 +255,7 @@ AddToggle("Auto-Punch", "AutoPunch")
 AddSection("Visuals & Performance")
 AddToggle("Team ESP", "ESP")
 AddToggle("Fullbright", "Fullbright")
-AddToggle("FPS Boost", "FpsBoost")
+AddToggle("FPS Boost (Remove Deco)", "FpsBoost")
 
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
@@ -423,15 +422,24 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- Main Heartbeat Loop
 RunService.Heartbeat:Connect(function()
-    -- FPS BOOST & FULLBRIGHT LOGIC
+    -- FPS BOOST (REMOVE DECO)
     if _G.FpsBoost then
         Lighting.GlobalShadows = false
         for _, obj in pairs(workspace:GetDescendants()) do
+            -- Disable particles and lighting effects
             if obj:IsA("ParticleEmitter") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
                 obj.Enabled = false
-            elseif obj:IsA("BasePart") and obj.Material == Enum.Material.Neon then
+            -- Remove grass, bushes, trees, and generic decorations
+            elseif obj:IsA("BasePart") and (obj.Name == "Grass" or obj.Name == "Bush" or obj.Name == "Tree" or obj.Material == Enum.Material.Grass) then
+                obj.Transparency = 1
+                obj.CanCollide = false
+            -- Flatten textures to smooth plastic for less rendering lag
+            elseif obj:IsA("BasePart") and obj.Material ~= Enum.Material.SmoothPlastic then
                 obj.Material = Enum.Material.SmoothPlastic
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
             end
         end
     end
