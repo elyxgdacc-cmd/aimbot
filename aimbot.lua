@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (True Hitbox Godmode + FPS Boost)
+-- DELTA PRISON (Working Hitbox Godmode + Optimize)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -33,7 +33,7 @@ _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 _G.Godmode = false
-_G.GodOffset = 20 -- Moves torso down 20 studs
+_G.GodOffset = 20
 
 local FullbrightOn = false
 local originalLighting = {
