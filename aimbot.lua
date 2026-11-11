@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Godmode + Auto-Arrest/Punch)
+-- DELTA PRISON (Godmode, Combat, FPS Boost, Fullbright)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -9,6 +9,7 @@ end
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -31,6 +32,16 @@ _G.ESP = false
 _G.Godmode = false
 _G.AutoArrest = false
 _G.AutoPunch = false
+_G.FpsBoost = false
+_G.Fullbright = false
+
+-- Backup Lighting
+local LightBackup = {
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    Brightness = Lighting.Brightness,
+    GlobalShadows = Lighting.GlobalShadows
+}
 
 -- =============================================================================
 -- UI CREATION
@@ -242,8 +253,10 @@ AddToggle("Godmode", "Godmode")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
-AddSection("Visuals")
+AddSection("Visuals & Performance")
 AddToggle("Team ESP", "ESP")
+AddToggle("Fullbright", "Fullbright")
+AddToggle("FPS Boost", "FpsBoost")
 
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
@@ -411,6 +424,30 @@ RunService.RenderStepped:Connect(function()
 end)
 
 RunService.Heartbeat:Connect(function()
+    -- FPS BOOST & FULLBRIGHT LOGIC
+    if _G.FpsBoost then
+        Lighting.GlobalShadows = false
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                obj.Enabled = false
+            elseif obj:IsA("BasePart") and obj.Material == Enum.Material.Neon then
+                obj.Material = Enum.Material.SmoothPlastic
+            end
+        end
+    end
+
+    if _G.Fullbright then
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+        Lighting.Brightness = 2
+        Lighting.GlobalShadows = false
+    else
+        Lighting.Ambient = LightBackup.Ambient
+        Lighting.OutdoorAmbient = LightBackup.OutdoorAmbient
+        Lighting.Brightness = LightBackup.Brightness
+        Lighting.GlobalShadows = LightBackup.GlobalShadows
+    end
+
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -431,8 +468,15 @@ RunService.Heartbeat:Connect(function()
             -- GODMODE LOGIC
             if _G.Godmode then
                 humanoid.Health = math.huge
-                -- Also make sure the head and torso don't take damage from the client side
                 humanoid.MaxHealth = math.huge
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+                if hrp.Velocity.Y < -50 then
+                    hrp.Velocity = Vector3.new(hrp.Velocity.X, -50, hrp.Velocity.Z)
+                end
             end
         end
     end
@@ -445,7 +489,6 @@ task.spawn(function()
         if LocalPlayer.Character then
             local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
-                -- Auto-Arrest
                 if _G.AutoArrest then
                     local tool = LocalPlayer.Character:FindFirstChild("Arrest")
                     if tool then
@@ -460,9 +503,7 @@ task.spawn(function()
                     end
                 end
                 
-                -- Auto-Punch
                 if _G.AutoPunch then
-                    -- Find any fist tool
                     local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
                     if tool and (tool.Name == "Fist" or tool.Name == "Punch") then
                         for _, p in pairs(Players:GetPlayers()) do
