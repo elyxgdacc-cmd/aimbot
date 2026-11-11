@@ -249,54 +249,6 @@ AddSection("Combat Mods")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
--- The OP Gun Button
-local opGunBtn = Instance.new("TextButton")
-opGunBtn.Size = UDim2.new(1, 0, 0, 28)
-opGunBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-opGunBtn.Text = "💥 Make Equipped Gun OP"
-opGunBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-opGunBtn.Font = Enum.Font.GothamBold
-opGunBtn.TextSize = 10
-opGunBtn.Parent = Container
-Instance.new("UICorner", opGunBtn).CornerRadius = UDim.new(0, 6)
-
-opGunBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    local tool = char and char:FindFirstChildWhichIsA("Tool")
-    
-    if tool then
-        opGunBtn.Text = "Modding..."
-        
-        for _, child in ipairs(tool:GetDescendants()) do
-            if child:IsA("LocalScript") or child:IsA("ModuleScript") then
-                child:Destroy()
-            end
-        end
-        
-        pcall(function()
-            for _, obj in pairs(getgc(true)) do
-                if type(obj) == "table" then
-                    if rawget(obj, "FireRate") then rawset(obj, "FireRate", 0) end
-                    if rawget(obj, "Cooldown") then rawset(obj, "Cooldown", 0) end
-                    if rawget(obj, "ReloadTime") then rawset(obj, "ReloadTime", 0) end
-                    if rawget(obj, "LastShot") then rawset(obj, "LastShot", 0) end
-                    if rawget(obj, "Debounce") then rawset(obj, "Debounce", 0) end
-                    if rawget(obj, "Ammo") then rawset(obj, "Ammo", 999) end
-                    if rawget(obj, "Mag") then rawset(obj, "Mag", 999) end
-                end
-            end
-        end)
-        
-        opGunBtn.Text = "✅ Gun is OP!"
-        task.wait(2)
-        opGunBtn.Text = "💥 Make Equipped Gun OP"
-    else
-        opGunBtn.Text = "❌ Equip a gun first!"
-        task.wait(2)
-        opGunBtn.Text = "💥 Make Equipped Gun OP"
-    end
-end)
-
 AddSection("Visuals & Performance")
 AddToggle("Team ESP", "ESP")
 
@@ -406,7 +358,7 @@ optBtn.MouseButton1Click:Connect(function()
     
     for _, obj in ipairs(Lighting:GetDescendants()) do 
         if obj:IsA("Atmosphere") or obj:IsA("Sky") then obj:Destroy() 
-        elseif obj:IsA("PostEffect") then obj:Enabled = false end
+        elseif obj:IsA("PostEffect") then obj.Enabled = false end
     end
 
     for _, obj in ipairs(Workspace:GetDescendants()) do
