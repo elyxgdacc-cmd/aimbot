@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement + Teleport Escape (Prison Life)
+-- DELTA PRISON (Mobile Landscape Fixed)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -14,7 +14,7 @@ local Camera = workspace.CurrentCamera
 
 local _G = getgenv and getgenv() or _G
 
--- Aimbot Globals
+-- Globals
 _G.Aimbot = false
 _G.TeamCheck = false
 _G.WallCheck = false
@@ -23,18 +23,12 @@ _G.AimSmooth = 25
 _G.AimPart = "Head"
 _G.ShowFov = true
 _G.ShowCrosshair = true
-
--- Movement Globals
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
-_G.Sprint = false -- Added sprint toggle
-
--- Auto Escape Globals
+_G.Sprint = false
 _G.AutoEscape = false
 _G.EscapeStuds = 15
-
--- ESP Global (1)
 _G.ESP = false
 
 -- =============================================================================
@@ -48,8 +42,9 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
+-- Made it small enough for mobile landscape
+MainFrame.Size = UDim2.new(0, 260, 0, 260) 
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -130)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -59,44 +54,45 @@ stroke.Color = Color3.fromRGB(0, 245, 255)
 stroke.Thickness = 1.5
 
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 35)
+Header.Size = UDim2.new(1, 0, 0, 30)
 Header.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Header.Parent = MainFrame
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "DELTA PRISON"
 Title.TextColor3 = Color3.fromRGB(0, 245, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 25, 0, 25)
-MinBtn.Position = UDim2.new(1, -30, 0, 5)
+MinBtn.Size = UDim2.new(0, 20, 0, 20)
+MinBtn.Position = UDim2.new(1, -25, 0, 5)
 MinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 MinBtn.Text = "-"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextSize = 16
+MinBtn.TextSize = 14
 MinBtn.Parent = Header
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
 
+-- WORKING SCROLLING FRAME
 local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -20, 1, -45)
-Container.Position = UDim2.new(0, 10, 0, 40)
+Container.Size = UDim2.new(1, -10, 1, -35)
+Container.Position = UDim2.new(0, 5, 0, 35)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 3
+Container.ScrollBarThickness = 4
 Container.ScrollBarImageColor3 = Color3.fromRGB(0, 245, 255)
 Container.CanvasSize = UDim2.new(0, 0, 0, 0)
 Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Container.Parent = MainFrame
 local layout = Instance.new("UIListLayout", Container)
-layout.Padding = UDim.new(0, 6)
+layout.Padding = UDim.new(0, 4)
 
 -- =============================================================================
 -- UI COMPONENTS
@@ -104,42 +100,42 @@ layout.Padding = UDim.new(0, 6)
 
 local function AddSection(titleText)
     local sec = Instance.new("TextLabel")
-    sec.Size = UDim2.new(1, 0, 0, 20)
+    sec.Size = UDim2.new(1, 0, 0, 16)
     sec.BackgroundTransparency = 1
     sec.Text = string.upper(titleText)
     sec.TextColor3 = Color3.fromRGB(0, 245, 255)
     sec.TextXAlignment = Enum.TextXAlignment.Left
     sec.Font = Enum.Font.GothamBold
-    sec.TextSize = 11
+    sec.TextSize = 10
     sec.Parent = Container
 end
 
 local function AddToggle(text, varName)
     local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, 0, 0, 32)
+    item.Size = UDim2.new(1, 0, 0, 28)
     item.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
     item.Parent = Container
     Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.Size = UDim2.new(1, -45, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 11
+    lbl.TextSize = 10
     lbl.Parent = item
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 40, 0, 20)
-    btn.Position = UDim2.new(1, -45, 0, 6)
+    btn.Size = UDim2.new(0, 35, 0, 18)
+    btn.Position = UDim2.new(1, -40, 0, 5)
     btn.BackgroundColor3 = _G[varName] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(50, 50, 50)
     btn.Text = _G[varName] and "ON" or "OFF"
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 10
+    btn.TextSize = 9
     btn.Parent = item
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
@@ -152,30 +148,30 @@ end
 
 local function AddTextbox(text, varName)
     local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, 0, 0, 32)
+    item.Size = UDim2.new(1, 0, 0, 28)
     item.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
     item.Parent = Container
     Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0.6, 0, 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 11
+    lbl.TextSize = 10
     lbl.Parent = item
 
     local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0, 50, 0, 20)
-    box.Position = UDim2.new(1, -60, 0, 6)
+    box.Size = UDim2.new(0, 45, 0, 18)
+    box.Position = UDim2.new(1, -50, 0, 5)
     box.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     box.Text = tostring(_G[varName])
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
     box.Font = Enum.Font.GothamBold
-    box.TextSize = 11
+    box.TextSize = 10
     box.Parent = item
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
     local boxStroke = Instance.new("UIStroke", box)
@@ -184,11 +180,7 @@ local function AddTextbox(text, varName)
 
     box.FocusLost:Connect(function()
         local val = tonumber(box.Text)
-        if val then
-            _G[varName] = val
-        else
-            box.Text = tostring(_G[varName])
-        end
+        if val then _G[varName] = val else box.Text = tostring(_G[varName]) end
     end)
 end
 
@@ -206,59 +198,58 @@ AddTextbox("FOV Radius", "AimFov")
 AddTextbox("Smoothing (0-100)", "AimSmooth")
 
 local partRow = Instance.new("Frame")
-partRow.Size = UDim2.new(1, 0, 0, 35)
+partRow.Size = UDim2.new(1, 0, 0, 28)
 partRow.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
 partRow.Parent = Container
 Instance.new("UICorner", partRow).CornerRadius = UDim.new(0, 6)
 
 local partLbl = Instance.new("TextLabel")
 partLbl.Size = UDim2.new(0.4, 0, 1, 0)
-partLbl.Position = UDim2.new(0, 10, 0, 0)
+partLbl.Position = UDim2.new(0, 8, 0, 0)
 partLbl.BackgroundTransparency = 1
 partLbl.Text = "Aim Part:"
 partLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
 partLbl.TextXAlignment = Enum.TextXAlignment.Left
 partLbl.Font = Enum.Font.GothamMedium
-partLbl.TextSize = 11
+partLbl.TextSize = 10
 partLbl.Parent = partRow
 
 local holder = Instance.new("Frame")
-holder.Size = UDim2.new(0.55, -10, 0, 25)
-holder.Position = UDim2.new(0.42, 0, 0, 5)
+holder.Size = UDim2.new(0.55, -10, 0, 20)
+holder.Position = UDim2.new(0.42, 0, 0, 4)
 holder.BackgroundTransparency = 1
 holder.Parent = partRow
 local hl = Instance.new("UIListLayout", holder)
 hl.FillDirection = Enum.FillDirection.Horizontal
-hl.Padding = UDim.new(0, 4)
+hl.Padding = UDim.new(0, 2)
 
-for _, part in ipairs({"Head", "Torso", "HumanoidRootPart"}) do
+for _, part in ipairs({"Head", "Torso", "HRP"}) do
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0.32, 0, 1, 0)
+    b.Size = UDim2.new(0.3, 0, 1, 0)
     b.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    b.Text = (part == "HumanoidRootPart" and "HRP") or part
+    b.Text = part
     b.TextColor3 = Color3.fromRGB(255, 255, 255)
     b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
+    b.TextSize = 9
     b.Parent = holder
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 3)
     b.MouseButton1Click:Connect(function()
-        _G.AimPart = part
+        _G.AimPart = (part == "HRP" and "HumanoidRootPart") or part
     end)
 end
 
+AddSection("Visuals")
+AddToggle("Team ESP", "ESP")
+
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
-AddToggle("Sprint (Hold LShift)", "Sprint")
+AddToggle("Sprint (LShift)", "Sprint")
 AddTextbox("Speed", "SpeedValue")
 AddTextbox("Jump Power", "JumpValue")
 
 AddSection("Prison Life")
-AddToggle("Auto Escape (TP)", "AutoEscape")
+AddToggle("Auto Escape", "AutoEscape")
 AddTextbox("Escape Studs", "EscapeStuds")
-
--- ESP Toggle (2)
-AddSection("ESP")
-AddToggle("Team ESP", "ESP")
 
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
@@ -291,18 +282,18 @@ local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
-        MainFrame.Size = UDim2.new(0, 280, 0, 35)
+        MainFrame.Size = UDim2.new(0, 260, 0, 30)
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 400)
+        MainFrame.Size = UDim2.new(0, 260, 0, 260)
         MinBtn.Text = "-"
         Container.Visible = true
     end
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE)
+-- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE, ESP)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -342,19 +333,15 @@ local function getClosestPlayer()
     return target
 end
 
--- ESP Cache (3)
 local espCache = {}
 
--- Render Loop
 RunService.RenderStepped:Connect(function()
     if FovCircle then
         FovCircle.Visible = _G.ShowFov
         FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
         FovCircle.Position = UDim2.new(0.5, -_G.AimFov, 0.5, -_G.AimFov)
     end
-    if Crosshair then
-        Crosshair.Visible = _G.ShowCrosshair
-    end
+    if Crosshair then Crosshair.Visible = _G.ShowCrosshair end
 
     if _G.Aimbot then
         local target = getClosestPlayer()
@@ -362,15 +349,11 @@ RunService.RenderStepped:Connect(function()
             local targetPos = target.Character[_G.AimPart].Position
             local currentCFrame = Camera.CFrame
             local goalCFrame = CFrame.new(currentCFrame.Position, targetPos)
-            
             local smoothFactor = _G.AimSmooth / 100
-            if smoothFactor > 0 then
-                Camera.CFrame = currentCFrame:Lerp(goalCFrame, smoothFactor)
-            end
+            if smoothFactor > 0 then Camera.CFrame = currentCFrame:Lerp(goalCFrame, smoothFactor) end
         end
     end
 
-    -- ESP Logic (4)
     if _G.ESP then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -388,11 +371,7 @@ RunService.RenderStepped:Connect(function()
                         box.Parent = p.Character
                         espCache[p] = box
                     end
-                    if p.Team then
-                        box.Color3 = p.Team.TeamColor.Color
-                    else
-                        box.Color3 = Color3.fromRGB(0, 245, 255)
-                    end
+                    if p.Team then box.Color3 = p.Team.TeamColor.Color else box.Color3 = Color3.fromRGB(0, 245, 255) end
                 end
             end
         end
@@ -404,19 +383,14 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Physics & Auto Escape Loop
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         
         if humanoid and hrp then
-            
-            -- EXACT IDK.LUA SPEED LOGIC
             local spd = _G.SpeedValue
-            if _G.Sprint and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
-                spd = spd * 2 
-            end
+            if _G.Sprint and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then spd = spd * 2 end
 
             if humanoid.MoveDirection.Magnitude > 0 and spd > 16 then
                 local velocityVector = humanoid.MoveDirection * spd
@@ -424,16 +398,10 @@ RunService.Heartbeat:Connect(function()
             else
                 humanoid.WalkSpeed = spd
             end
-            -- END SPEED LOGIC
 
-            if humanoid.UseJumpPower then
-                humanoid.JumpPower = _G.JumpValue
-            else
-                humanoid.JumpHeight = _G.JumpValue / 7
-            end
+            if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
         end
 
-        -- PRISON LIFE CUSTOM TELEPORT ESCAPE
         if _G.AutoEscape and hrp then
             local lookDir = Camera.CFrame.LookVector
             hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
@@ -441,17 +409,13 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Infinite Jump Logic
 UserInputService.JumpRequest:Connect(function()
     if _G.InfJump and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- Draggable UI
 local dragging, dragInput, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
