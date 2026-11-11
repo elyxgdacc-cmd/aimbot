@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement + Teleport Escape + ESP (Prison Life)
+-- DELTA Aimbot + Movement + Teleport Escape (Prison Life)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -28,13 +28,13 @@ _G.ShowCrosshair = true
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
-_G.Sprint = false
+_G.Sprint = false -- Added sprint toggle
 
 -- Auto Escape Globals
 _G.AutoEscape = false
 _G.EscapeStuds = 15
 
--- ESP Global
+-- ESP Global (1)
 _G.ESP = false
 
 -- =============================================================================
@@ -48,8 +48,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 430)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -215)
+MainFrame.Size = UDim2.new(0, 280, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -246,9 +246,6 @@ for _, part in ipairs({"Head", "Torso", "HumanoidRootPart"}) do
     end)
 end
 
-AddSection("Visuals")
-AddToggle("Team ESP", "ESP")
-
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
 AddToggle("Sprint (Hold LShift)", "Sprint")
@@ -258,6 +255,10 @@ AddTextbox("Jump Power", "JumpValue")
 AddSection("Prison Life")
 AddToggle("Auto Escape (TP)", "AutoEscape")
 AddTextbox("Escape Studs", "EscapeStuds")
+
+-- ESP Toggle (2)
+AddSection("ESP")
+AddToggle("Team ESP", "ESP")
 
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
@@ -294,14 +295,14 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 430)
+        MainFrame.Size = UDim2.new(0, 280, 0, 400)
         MinBtn.Text = "-"
         Container.Visible = true
     end
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE, ESP)
+-- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -341,10 +342,11 @@ local function getClosestPlayer()
     return target
 end
 
--- ESP Logic
+-- ESP Cache (3)
 local espCache = {}
+
+-- Render Loop
 RunService.RenderStepped:Connect(function()
-    -- Aimbot & FOV
     if FovCircle then
         FovCircle.Visible = _G.ShowFov
         FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
@@ -360,6 +362,7 @@ RunService.RenderStepped:Connect(function()
             local targetPos = target.Character[_G.AimPart].Position
             local currentCFrame = Camera.CFrame
             local goalCFrame = CFrame.new(currentCFrame.Position, targetPos)
+            
             local smoothFactor = _G.AimSmooth / 100
             if smoothFactor > 0 then
                 Camera.CFrame = currentCFrame:Lerp(goalCFrame, smoothFactor)
@@ -367,7 +370,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- ESP
+    -- ESP Logic (4)
     if _G.ESP then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -385,7 +388,6 @@ RunService.RenderStepped:Connect(function()
                         box.Parent = p.Character
                         espCache[p] = box
                     end
-                    -- Team Color logic
                     if p.Team then
                         box.Color3 = p.Team.TeamColor.Color
                     else
@@ -409,6 +411,8 @@ RunService.Heartbeat:Connect(function()
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         
         if humanoid and hrp then
+            
+            -- EXACT IDK.LUA SPEED LOGIC
             local spd = _G.SpeedValue
             if _G.Sprint and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
                 spd = spd * 2 
@@ -420,6 +424,7 @@ RunService.Heartbeat:Connect(function()
             else
                 humanoid.WalkSpeed = spd
             end
+            -- END SPEED LOGIC
 
             if humanoid.UseJumpPower then
                 humanoid.JumpPower = _G.JumpValue
@@ -428,6 +433,7 @@ RunService.Heartbeat:Connect(function()
             end
         end
 
+        -- PRISON LIFE CUSTOM TELEPORT ESCAPE
         if _G.AutoEscape and hrp then
             local lookDir = Camera.CFrame.LookVector
             hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
