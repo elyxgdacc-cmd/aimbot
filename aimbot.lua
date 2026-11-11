@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (True Godmode + One-Click Optimize)
+-- DELTA PRISON (Optimized + No Broken Godmode)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -30,7 +30,6 @@ _G.JumpValue = 50
 _G.InfJump = false
 _G.Sprint = false
 _G.ESP = false
-_G.Godmode = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 
@@ -247,14 +246,12 @@ for _, part in ipairs({"Head", "Torso", "HRP"}) do
 end
 
 AddSection("Combat Mods")
-AddToggle("True Godmode", "Godmode")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
 AddSection("Visuals & Performance")
 AddToggle("Team ESP", "ESP")
 
--- The Two Buttons
 local btnRow = Instance.new("Frame")
 btnRow.Size = UDim2.new(1, 0, 0, 28)
 btnRow.BackgroundTransparency = 1
@@ -528,24 +525,6 @@ RunService.Heartbeat:Connect(function()
             end
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
-
-            -- TRUE GODMODE LOGIC (Hitbox Bypass)
-            if _G.Godmode then
-                humanoid.Health = math.huge
-                humanoid.MaxHealth = math.huge
-                
-                -- If the server tries to kill us, we reset the torso and disable collisions
-                local torso = LocalPlayer.Character:FindFirstChild("Torso") or LocalPlayer.Character:FindFirstChild("UpperTorso")
-                if torso then
-                    torso.CanCollide = false
-                    torso.Transparency = 0.5
-                end
-                
-                -- Prevent falling into the void due to no collision
-                if hrp.AssemblyLinearVelocity.Y < -50 then
-                    hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -50, hrp.AssemblyLinearVelocity.Z)
-                end
-            end
         end
     end
 end)
