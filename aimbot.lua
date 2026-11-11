@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement + Teleport Escape (Prison Life)
+-- DELTA Aimbot + Movement + ESP (Prison Life)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -28,11 +28,14 @@ _G.ShowCrosshair = true
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.InfJump = false
-_G.Sprint = false -- Added sprint toggle
+_G.Sprint = false
 
 -- Auto Escape Globals
 _G.AutoEscape = false
 _G.EscapeStuds = 15
+
+-- ESP Globals
+_G.ESP = false
 
 -- =============================================================================
 -- UI CREATION
@@ -45,8 +48,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 280, 0, 440)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -220)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -243,6 +246,9 @@ for _, part in ipairs({"Head", "Torso", "HumanoidRootPart"}) do
     end)
 end
 
+AddSection("Visuals")
+AddToggle("Team ESP", "ESP")
+
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
 AddToggle("Sprint (Hold LShift)", "Sprint")
@@ -288,14 +294,14 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 400)
+        MainFrame.Size = UDim2.new(0, 280, 0, 440)
         MinBtn.Text = "-"
         Container.Visible = true
     end
 end)
 
 -- =============================================================================
--- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE)
+-- LOGIC (AIMBOT, MOVEMENT, AUTO ESCAPE, ESP)
 -- =============================================================================
 
 local function isWallBlocking(targetPart)
@@ -361,6 +367,44 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- ESP Logic
+local espCache = {}
+RunService.RenderStepped:Connect(function()
+    if _G.ESP then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local box = espCache[p]
+                    if not box then
+                        box = Instance.new("BoxHandleAdornment")
+                        box.Name = "DeltaESP"
+                        box.Adornee = p.Character.HumanoidRootPart
+                        box.Size = Vector3.new(4, 6, 4)
+                        box.AlwaysOnTop = true
+                        box.ZIndex = 10
+                        box.Transparency = 0.5
+                        box.Parent = p.Character
+                        espCache[p] = box
+                    end
+                    
+                    -- Color based on Team
+                    if p.Team then
+                        box.Color3 = p.Team.TeamColor.Color
+                    else
+                        box.Color3 = Color3.fromRGB(0, 245, 255)
+                    end
+                end
+            end
+        end
+    else
+        for p, box in pairs(espCache) do
+            if box then box:Destroy() end
+            espCache[p] = nil
+        end
+    end
+end)
+
 -- Physics & Auto Escape Loop
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
@@ -368,8 +412,6 @@ RunService.Heartbeat:Connect(function()
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         
         if humanoid and hrp then
-            
-            -- EXACT IDK.LUA SPEED LOGIC
             local spd = _G.SpeedValue
             if _G.Sprint and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
                 spd = spd * 2 
@@ -381,7 +423,6 @@ RunService.Heartbeat:Connect(function()
             else
                 humanoid.WalkSpeed = spd
             end
-            -- END SPEED LOGIC
 
             if humanoid.UseJumpPower then
                 humanoid.JumpPower = _G.JumpValue
@@ -390,7 +431,6 @@ RunService.Heartbeat:Connect(function()
             end
         end
 
-        -- PRISON LIFE CUSTOM TELEPORT ESCAPE
         if _G.AutoEscape and hrp then
             local lookDir = Camera.CFrame.LookVector
             hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
