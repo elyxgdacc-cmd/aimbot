@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement + ESP (Prison Life)
+-- DELTA Aimbot + Movement + Teleport Escape + ESP (Prison Life)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -34,7 +34,7 @@ _G.Sprint = false
 _G.AutoEscape = false
 _G.EscapeStuds = 15
 
--- ESP Globals
+-- ESP Global
 _G.ESP = false
 
 -- =============================================================================
@@ -48,8 +48,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 440)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -220)
+MainFrame.Size = UDim2.new(0, 280, 0, 430)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -215)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -294,7 +294,7 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 440)
+        MainFrame.Size = UDim2.new(0, 280, 0, 430)
         MinBtn.Text = "-"
         Container.Visible = true
     end
@@ -341,8 +341,10 @@ local function getClosestPlayer()
     return target
 end
 
--- Render Loop
+-- ESP Logic
+local espCache = {}
 RunService.RenderStepped:Connect(function()
+    -- Aimbot & FOV
     if FovCircle then
         FovCircle.Visible = _G.ShowFov
         FovCircle.Size = UDim2.new(0, _G.AimFov * 2, 0, _G.AimFov * 2)
@@ -358,18 +360,14 @@ RunService.RenderStepped:Connect(function()
             local targetPos = target.Character[_G.AimPart].Position
             local currentCFrame = Camera.CFrame
             local goalCFrame = CFrame.new(currentCFrame.Position, targetPos)
-            
             local smoothFactor = _G.AimSmooth / 100
             if smoothFactor > 0 then
                 Camera.CFrame = currentCFrame:Lerp(goalCFrame, smoothFactor)
             end
         end
     end
-end)
 
--- ESP Logic
-local espCache = {}
-RunService.RenderStepped:Connect(function()
+    -- ESP
     if _G.ESP then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -387,8 +385,7 @@ RunService.RenderStepped:Connect(function()
                         box.Parent = p.Character
                         espCache[p] = box
                     end
-                    
-                    -- Color based on Team
+                    -- Team Color logic
                     if p.Team then
                         box.Color3 = p.Team.TeamColor.Color
                     else
