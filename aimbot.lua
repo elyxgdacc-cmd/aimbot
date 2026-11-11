@@ -33,7 +33,7 @@ _G.ESP = false
 _G.AutoArrest = false
 _G.AutoPunch = false
 _G.Godmode = false
-_G.GodOffset = 15
+_G.GodOffset = 15 
 
 local FullbrightOn = false
 local originalLighting = {
@@ -530,28 +530,28 @@ RunService.Heartbeat:Connect(function()
 
             if humanoid.UseJumpPower then humanoid.JumpPower = _G.JumpValue else humanoid.JumpHeight = _G.JumpValue / 7 end
 
-            -- HITBOX GODMODE
+            -- WORKING HITBOX GODMODE
             if _G.Godmode then
                 humanoid.Health = math.huge
                 humanoid.MaxHealth = math.huge
                 
-                -- Disable the game's Health script so it can't hurt us
+                -- Disable the game's Health script
                 local healthScript = LocalPlayer.Character:FindFirstChild("Health")
                 if healthScript and healthScript:IsA("LocalScript") then
                     healthScript.Disabled = true
                 end
 
-                -- Move the Torso and Head underground, NOT the HRP
+                -- Move the Torso and Head underground using Velocity so we don't break the script
                 local torso = LocalPlayer.Character:FindFirstChild("Torso")
                 local head = LocalPlayer.Character:FindFirstChild("Head")
                 
                 if torso then 
                     torso.CanCollide = false
-                    torso.CFrame = CFrame.new(torso.Position.X, hrp.Position.Y - _G.GodOffset, torso.Position.Z)
+                    torso.Velocity = Vector3.new(0, -_G.GodOffset * 10, 0)
                 end
                 if head then 
                     head.CanCollide = false 
-                    head.CFrame = CFrame.new(head.Position.X, hrp.Position.Y - _G.GodOffset, head.Position.Z)
+                    head.Velocity = Vector3.new(0, -_G.GodOffset * 10, 0)
                 end
             end
         end
