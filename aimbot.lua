@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA Aimbot + Movement + Auto Escape (Prison Life)
+-- DELTA Aimbot + Movement + Teleport Escape (Prison Life)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -31,6 +31,7 @@ _G.InfJump = false
 
 -- Auto Escape Globals
 _G.AutoEscape = false
+_G.EscapeStuds = 15
 
 -- =============================================================================
 -- UI CREATION
@@ -43,8 +44,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 280, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
@@ -145,64 +146,44 @@ local function AddToggle(text, varName)
     end)
 end
 
-local function AddSlider(text, min, max, varName)
+local function AddTextbox(text, varName)
     local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, 0, 0, 45)
+    item.Size = UDim2.new(1, 0, 0, 32)
     item.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
     item.Parent = Container
     Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, 20)
-    lbl.Position = UDim2.new(0, 10, 0, 4)
+    lbl.Size = UDim2.new(0.6, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text = text .. ": " .. tostring(_G[varName])
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Font = Enum.Font.GothamMedium
     lbl.TextSize = 11
     lbl.Parent = item
 
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1, -20, 0, 6)
-    bar.Position = UDim2.new(0, 10, 0, 28)
-    bar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    bar.Parent = item
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, 50, 0, 20)
+    box.Position = UDim2.new(1, -60, 0, 6)
+    box.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    box.Text = tostring(_G[varName])
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.Font = Enum.Font.GothamBold
+    box.TextSize = 11
+    box.Parent = item
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+    local boxStroke = Instance.new("UIStroke", box)
+    boxStroke.Color = Color3.fromRGB(0, 245, 255)
+    boxStroke.Thickness = 1
 
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((_G[varName] - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 245, 255)
-    fill.Parent = bar
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
-    -- FIXED SLIDER LOGIC
-    local isDragging = false
-
-    local function updateSlider(x)
-        local percent = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        local val = math.floor(min + (max - min) * percent)
-        _G[varName] = val
-        fill.Size = UDim2.new(percent, 0, 1, 0)
-        lbl.Text = text .. ": " .. tostring(val)
-    end
-
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isDragging = true
-            updateSlider(input.Position.X)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateSlider(input.Position.X)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isDragging = false
+    box.FocusLost:Connect(function()
+        local val = tonumber(box.Text)
+        if val then
+            _G[varName] = val
+        else
+            box.Text = tostring(_G[varName])
         end
     end)
 end
@@ -217,8 +198,8 @@ AddToggle("Show FOV Circle", "ShowFov")
 AddToggle("Show Crosshair", "ShowCrosshair")
 AddToggle("Team Check", "TeamCheck")
 AddToggle("Wall Check", "WallCheck")
-AddSlider("FOV Radius", 50, 500, "AimFov")
-AddSlider("Smoothing", 0, 100, "AimSmooth")
+AddTextbox("FOV Radius", "AimFov")
+AddTextbox("Smoothing (0-100)", "AimSmooth")
 
 local partRow = Instance.new("Frame")
 partRow.Size = UDim2.new(1, 0, 0, 35)
@@ -263,11 +244,12 @@ end
 
 AddSection("Movement")
 AddToggle("Infinite Jump", "InfJump")
-AddSlider("Speed", 16, 150, "SpeedValue")
-AddSlider("Jump Power", 50, 250, "JumpValue")
+AddTextbox("Speed", "SpeedValue")
+AddTextbox("Jump Power", "JumpValue")
 
 AddSection("Prison Life")
-AddToggle("Auto Escape", "AutoEscape")
+AddToggle("Auto Escape (TP)", "AutoEscape")
+AddTextbox("Escape Studs", "EscapeStuds")
 
 -- =============================================================================
 -- VISUALS (FOV & CROSSHAIR)
@@ -304,7 +286,7 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
         Container.Visible = false
     else
-        MainFrame.Size = UDim2.new(0, 280, 0, 360)
+        MainFrame.Size = UDim2.new(0, 280, 0, 380)
         MinBtn.Text = "-"
         Container.Visible = true
     end
@@ -392,11 +374,11 @@ RunService.Heartbeat:Connect(function()
             end
         end
 
-        -- PRISON LIFE AUTO ESCAPE
+        -- PRISON LIFE CUSTOM TELEPORT ESCAPE
         if _G.AutoEscape and hrp then
-            -- The classic Prison Life escape vector (pushes you through the wall/out of bounds)
-            -- Adjust the Vector3 if you need to point it a different way
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, 0, -5) 
+            local lookDir = Camera.CFrame.LookVector
+            -- Teleport you forward based on camera direction by your custom studs
+            hrp.CFrame = hrp.CFrame + (lookDir * _G.EscapeStuds)
         end
     end
 end)
