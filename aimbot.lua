@@ -1,5 +1,5 @@
 -- =============================================================================
--- DELTA PRISON (Optimized + No Broken Godmode + OP Gun)
+-- DELTA PRISON (Optimized + No Broken Godmode)
 -- =============================================================================
 
 if game.CoreGui:FindFirstChild("DeltaAimbotMenu") then
@@ -249,7 +249,7 @@ AddSection("Combat Mods")
 AddToggle("Auto-Arrest", "AutoArrest")
 AddToggle("Auto-Punch", "AutoPunch")
 
--- NEW: The OP Gun Button
+-- The OP Gun Button
 local opGunBtn = Instance.new("TextButton")
 opGunBtn.Size = UDim2.new(1, 0, 0, 28)
 opGunBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
@@ -267,14 +267,12 @@ opGunBtn.MouseButton1Click:Connect(function()
     if tool then
         opGunBtn.Text = "Modding..."
         
-        -- 1. Delete the LocalScripts inside the gun
         for _, child in ipairs(tool:GetDescendants()) do
             if child:IsA("LocalScript") or child:IsA("ModuleScript") then
                 child:Destroy()
             end
         end
         
-        -- 2. Wipe the memory tables (Cooldown + Reload + Ammo)
         pcall(function()
             for _, obj in pairs(getgc(true)) do
                 if type(obj) == "table" then
